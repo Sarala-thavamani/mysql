@@ -16,17 +16,26 @@ jobs:
     - name: Set up Docker
       uses: docker/setup-buildx-action@v1
 
+    - name: Install Docker Compose
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y curl
+        sudo curl -L "https://github.com/docker/compose/releases/download/v2.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+        sudo chmod +x /usr/local/bin/docker-compose
+        docker-compose --version
+
     - name: Start MySQL Container
-      run: docker-compose up -d
+      run: |
+        docker-compose -f docker-compose.yml up -d
 
     - name: Wait for MySQL to be ready
       run: |
         echo "Waiting for MySQL to be ready..."
-        until docker exec my-mysql mysqladmin ping -uroot -prootpassword --silent; do
+        until docker exec my-mysql mysqladmin ping -uroot -proot --silent; do
           echo "Waiting for MySQL..."
           sleep 5
         done
 
     - name: Check database for users table
       run: |
-        docker exec -i my-mysql mysql -uroot -prootpassword testdb -e "SELECT * FROM users;"
+        docker exec -i my-mysql mysql -uroot -proot testdb -e "SELECT * FROM users;"
