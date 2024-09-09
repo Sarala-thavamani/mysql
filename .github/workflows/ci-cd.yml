@@ -1,0 +1,32 @@
+name: CI/CD Pipeline for MySQL
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Docker
+      uses: docker/setup-buildx-action@v1
+
+    - name: Start MySQL Container
+      run: docker-compose up -d
+
+    - name: Wait for MySQL to be ready
+      run: |
+        echo "Waiting for MySQL to be ready..."
+        until docker exec my-mysql mysqladmin ping -uroot -prootpassword --silent; do
+          echo "Waiting for MySQL..."
+          sleep 5
+        done
+
+    - name: Check database for users table
+      run: |
+        docker exec -i my-mysql mysql -uroot -prootpassword testdb -e "SELECT * FROM users;"
